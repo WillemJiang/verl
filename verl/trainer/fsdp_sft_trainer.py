@@ -167,7 +167,7 @@ class FSDPSFTTrainer(object):
                                            drop_last=True)
 
         self.val_sampler = DistributedSampler(self.val_dataset,
-                                              shuffle=True,
+                                              shuffle=False,
                                               num_replicas=world_size,
                                               rank=rank,
                                               drop_last=True)
@@ -468,11 +468,11 @@ class FSDPSFTTrainer(object):
             for data in tqdm(self.train_dataloader,
                              total=self.steps_per_epoch,
                              desc=f"Epoch {epoch+1}/{self.config.trainer.total_epochs}"):
+                global_step += 1
                 data = TensorDict(data, batch_size=self.config.data.train_batch_size).cuda()
                 metric = self.training_step(data)
                 if rank == 0:
                     tracking.log(data=metric, step=global_step)
-                global_step += 1
 
                 # for early exit validation
                 if global_step >= self.total_training_steps:
